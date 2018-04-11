@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import copy
+from sklearn.metrics import mean_absolute_error
 
 class Particle:
     def __init__(self, n_x, n_y):
@@ -66,14 +67,22 @@ class Particle:
 
         return A
 
+    def get_mae(self, X, y):
+        n_x, n_y = self.n_x, self.n_y
+        w, b = self.pbest[:n_x * n_y].reshape((n_y, -1)), self.pbest[n_x * n_y:].reshape((n_y, 1))
+
+        Z = np.dot(w, X) + b
+        A = self.tanh(Z)
+        return mean_absolute_error(A, y)
+
 
 class PSO:
     def __init__(self, n_particles=100):
         self.n_particles = n_particles
         self.c1 = 2
         self.c2 = 2
-        self.v_max = 4
-        self.v_min = -4
+        self.v_max = 1
+        self.v_min = -1
         self.w_max = 0.9
         self.w_min = 0.4
         self.c1_max = 2
@@ -106,6 +115,8 @@ class PSO:
 
             c2 = (self.c2_max - self.c2_min) * e / epochs + self.c2_min
 
+            avg_mae = 0
+
             for p in particles:
                 fitness = p.compute_fitness(X_train, y_train)
 
@@ -118,7 +129,9 @@ class PSO:
                     gbest = p.get_x()
                     gbest_particle = copy.deepcopy(p)
 
-            print("Epoch %.f: %.5f" % (e + 1, gbest_fitness))
+                avg_mae += p.get_mae(X_train, y_train)
+
+            print("Epoch %.f: %.5f" % (e + 1, avg_mae / len(particles)))
 
             for p in particles:
                 x = p.get_x()

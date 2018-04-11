@@ -46,7 +46,10 @@ class Chromosome:
         other_x = other.get_x()
 
         child1_x = (my_x + other_x) / 2
-        child2_x = (my_x - other_x) / 2
+        
+        pmax = np.ones(my_x.shape)
+        maxp1p2 = np.maximum(my_x, other_x)
+        child2_x = pmax * 0.4 + maxp1p2 * 0.6
 
         child1 = Chromosome(self.n_x, self.n_y, child1_x)
         child2 = Chromosome(self.n_x, self.n_y, child2_x)
