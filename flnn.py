@@ -8,7 +8,7 @@ import helper
 
 
 def init_parameters(n_inputs, n_outputs):
-    W = np.random.randn(n_outputs, n_inputs) * np.sqrt(1 / n_inputs)
+    W = np.random.randn(n_outputs, n_inputs)
     b = np.zeros((n_outputs, 1))
     
     return W, b
@@ -56,7 +56,7 @@ def random_mini_batches(X, Y, mini_batch_size = 64, seed = 0):
     
     return mini_batches
 
-def model(X, y, X_valid, y_valid, X_test, y_test, learning_rate = 0.05, epochs = 200, batch_size = 32, beta = 0.9):
+def model(X, y, X_valid, y_valid, X_test, y_test, learning_rate = 0.05, epochs = 1000, batch_size = 64, beta = 0.9):
     
     seed = 1
     
@@ -100,17 +100,23 @@ def model(X, y, X_valid, y_valid, X_test, y_test, learning_rate = 0.05, epochs =
             W -= learning_rate * vdW
             b -= learning_rate * vdb
 
+        Z_t = np.dot(W, X_train) + b
+        A_t = tanh(Z_t)
+            
+        mae_train = mean_absolute_error(A_t, y_train)
+        print("MAE Train: %.5f" % (mae_train))
+
         if e % 10 == 0:
 
             Z_p = np.dot(W, X_valid) + b
             A_p = tanh(Z_p)
             
-            mae_valid = np.sqrt(mean_absolute_error(A_p, y_valid))
+            mae_valid = mean_absolute_error(A_p, y_valid)
 
             Z_t = np.dot(W, X_train) + b
             A_t = tanh(Z_t)
             
-            mae_train = np.sqrt(mean_absolute_error(A_t, y_train))
+            mae_train = mean_absolute_error(A_t, y_train)
 
             maes_train.append(mae_train)
             maes_valid.append(mae_valid)
@@ -126,12 +132,12 @@ def model(X, y, X_valid, y_valid, X_test, y_test, learning_rate = 0.05, epochs =
 
     return A_p
 
-df = pd.read_csv('sinwave.csv', header=None, index_col=False, usecols=[0])
+df = pd.read_csv('data_resource_usage_fiveMinutes_6176858948.csv', header=None, index_col=False, usecols=[3])
 df.dropna(inplace=True)
 
 dataset_original = df.values
 
-X, y = helper.process_data(dataset_original, helper.power_data, helper.transform, helper.sliding_data, 2, 4)
+X, y = helper.process_data(dataset_original, helper.legendre_data, helper.transform, helper.sliding_data, 3, 4)
 
 train_size = int(0.7 * X.shape[0])
 valid_size = int(0.15 * X.shape[0])

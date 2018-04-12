@@ -45,11 +45,28 @@ class Chromosome:
         my_x = self.get_x()
         other_x = other.get_x()
 
-        child1_x = (my_x + other_x) / 2
+        # child1_x = (my_x + other_x) / 2
         
-        pmax = np.ones(my_x.shape)
-        maxp1p2 = np.maximum(my_x, other_x)
-        child2_x = pmax * 0.4 + maxp1p2 * 0.6
+        # pmax = np.ones(my_x.shape)
+        # maxp1p2 = np.maximum(my_x, other_x)
+        # child2_x = pmax * 0.4 + maxp1p2 * 0.6
+        
+        """
+            Arithmetic crossover
+        """
+        r = random.random()
+        child1_x = r * my_x + (1 - r) * other_x
+        child2_x = (1 - r) * my_x + r * other_x
+
+        """
+            Heuristic crossover
+        """
+        # if self.get_fitness() > other.get_fitness():
+        #     child1_x = my_x + random.random() * (my_x - other_x)
+        #     child2_x = my_x
+        # else:
+        #     child1_x = other_x + random.random() * (other_x - my_x)
+        #     child2_x = other_x
 
         child1 = Chromosome(self.n_x, self.n_y, child1_x)
         child2 = Chromosome(self.n_x, self.n_y, child2_x)
@@ -59,8 +76,21 @@ class Chromosome:
     def mutate(self, mutate_rate):
         for i in range(self.dimensions):
             if random.random() < mutate_rate:
+                """
+                    Uniform mutation
+                """
+                # index = np.random.randint(self.dimensions)
+                # self.x[index] = np.random.uniform(low=-1, high=1)
+
+                """
+                    Boundary mutation
+                """
                 index = np.random.randint(self.dimensions)
-                self.x[index] = np.random.uniform(low=-1, high=1)
+                r = random.random()
+                if r > 0.5:
+                    self.x[index] = 1
+                else:
+                    self.x[index] = -1
 
     def predict(self, X_test):
         w, b = self.x[:self.n_x * self.n_y].reshape((self.n_y, -1)), self.x[self.n_x * self.n_y:].reshape((self.n_y, 1))
@@ -96,7 +126,7 @@ class Population:
         self.population = population
 
     def tournament_selection(self, fitnesses):
-        k = 5
+        k = 10
         chromosomes_fitness = []
         chromosomes_indices = []
 

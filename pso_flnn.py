@@ -2,6 +2,7 @@ import numpy as np
 import random
 import copy
 from sklearn.metrics import mean_absolute_error
+import matplotlib.pyplot as plt
 
 class Particle:
     def __init__(self, n_x, n_y):
@@ -85,9 +86,9 @@ class PSO:
         self.v_min = -1
         self.w_max = 0.9
         self.w_min = 0.4
-        self.c1_max = 2
+        self.c1_max = 2.5
         self.c1_min = 0.5
-        self.c2_max = 2
+        self.c2_max = 2.5
         self.c2_min = 0.5
 
     def initialize_particles(self, n_x, n_y):
@@ -97,13 +98,15 @@ class PSO:
             particles.append(p)
         return particles
 
-    def train(self, X_train, y_train, epochs=200):
+    def train(self, X_train, y_train, epochs=450):
         n_x = X_train.shape[0]
         n_y = y_train.shape[0]
 
         gbest = None
         gbest_fitness = -1
         gbest_particle = None
+
+        train_maes = []
 
         particles = self.initialize_particles(n_x, n_y)
 
@@ -115,7 +118,7 @@ class PSO:
 
             c2 = (self.c2_max - self.c2_min) * e / epochs + self.c2_min
 
-            avg_mae = 0
+            avg_mae_train = 0
 
             for p in particles:
                 fitness = p.compute_fitness(X_train, y_train)
@@ -129,16 +132,17 @@ class PSO:
                     gbest = p.get_x()
                     gbest_particle = copy.deepcopy(p)
 
-                avg_mae += p.get_mae(X_train, y_train)
+                avg_mae_train += p.get_mae(X_train, y_train)
 
-            print("Epoch %.f: %.5f" % (e + 1, avg_mae / len(particles)))
+            print("Epoch %.f: %.5f" % (e + 1, avg_mae_train / len(particles)))
+            train_maes.append(avg_mae_train / len(particles))
 
             for p in particles:
                 x = p.get_x()
                 pbest = p.get_pbest()
                 v_o = p.get_v()
 
-                v_n = w * v_o + c1 * random.random() * (pbest - x) + c2 * random.random() * (gbest - x)
+                v_n = w * v_o + c1 * random.uniform(0, 1) * (pbest - x) + c2 * random.uniform(0, 1) * (gbest - x)
 
                 v_n[v_n > self.v_max] = self.v_max
                 v_n[v_n < self.v_min] = self.v_min
@@ -147,4 +151,6 @@ class PSO:
 
                 p.set_v(v_n)
                 p.set_x(x_n)
+        plt.plot(train_maes, color='blue')
+        plt.show()
         return gbest_particle

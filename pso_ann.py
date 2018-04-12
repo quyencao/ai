@@ -146,13 +146,13 @@ class PSO:
                     gbest_particle = copy.deepcopy(p)
 
             print("Epoch %.f: %.5f" % (e , gbest_fitness))
-
+            # file nay pso voi ann
             for p in particles:
                 x = p.get_x()
                 pbest = p.get_pbest()
                 v_o = p.get_v()
 
-                v_n = w * v_o + c1 * random.random() * (pbest - x) + c2 * random.random() * (gbest - x)
+                v_n = w * v_o + c1 * random.uniform(0, 1) * (pbest - x) + c2 * random.uniform(0, 1) * (gbest - x)
 
                 v_n[v_n > self.v_max] = self.v_max
                 v_n[v_n < self.v_min] = self.v_min

@@ -7,25 +7,21 @@ import matplotlib.pyplot as plt
 import helper
 
 def init_parameters(n_inputs, n_hidden, n_outputs):
-    W1 = np.random.randn(n_hidden, n_inputs) * np.sqrt(2 / n_inputs)
+    W1 = np.random.randn(n_hidden, n_inputs)
     b1 = np.zeros((n_hidden, 1))
-    W2 = np.random.randn(n_outputs, n_hidden) * np.sqrt(2 / n_hidden)
+    W2 = np.random.randn(n_outputs, n_hidden)
     b2 = np.zeros((n_outputs, 1))
     
     return W1, b1, W2, b2
 
-def init_adam_parameters(W1, b1, W2, b2):
+def init_momentum_parameters(W1, b1, W2, b2):
     vdW1 = np.zeros(W1.shape)
     vdb1 = np.zeros(b1.shape)
-    sdW1 = np.zeros(W1.shape)
-    sdb1 = np.zeros(b1.shape)
     
     vdW2 = np.zeros(W2.shape)
     vdb2 = np.zeros(b2.shape)
-    sdW2 = np.zeros(W2.shape)
-    sdb2 = np.zeros(b2.shape)
     
-    return vdW1, vdb1, sdW1, sdb1, vdW2, vdb2, sdW2, sdb2
+    return vdW1, vdb1, vdW2, vdb2
 
 def tanh(x):
     e_plus = np.exp(x)
@@ -47,7 +43,7 @@ def relu_backward(x):
 
 def feed_forward(X, W1, b1, W2, b2):
     Z1 = np.dot(W1, X) + b1
-    A1 = relu(Z1)
+    A1 = tanh(Z1)
     Z2 = np.dot(W2, A1) + b2
     A2 = tanh(Z2)
     
@@ -82,7 +78,7 @@ def random_mini_batches(X, Y, mini_batch_size = 64, seed = 0):
     
     return mini_batches
 
-def model(X, y, X_valid, y_valid, X_test, y_test, n_hidden, learning_rate = 0.0001, epochs = 300, batch_size = 32, beta1 = 0.9, beta2 = 0.999, epsilon = 1e-8):
+def model(X, y, X_valid, y_valid, X_test, y_test, n_hidden, learning_rate = 0.05, epochs = 1000, batch_size = 64, beta = 0.9):
     
     seed = 1
     
@@ -91,16 +87,10 @@ def model(X, y, X_valid, y_valid, X_test, y_test, n_hidden, learning_rate = 0.00
     
     W1, b1, W2, b2 = init_parameters(n_inputs, n_hidden, n_outputs)
     
-    vdW1, vdb1, sdW1, sdb1, vdW2, vdb2, sdW2, sdb2 = init_adam_parameters(W1, b1, W2, b2)
-    
-    t = 0
+    vdW1, vdb1, vdW2, vdb2 = init_momentum_parameters(W1, b1, W2, b2)
     
     train_rmse = []
     test_rmse = []
-    
-    min_valid_mae = 100
-    best_w = {}
-    best_b = {}
     
     for e in range(epochs):
         
@@ -124,71 +114,43 @@ def model(X, y, X_valid, y_valid, X_test, y_test, n_hidden, learning_rate = 0.00
             dW2 = 1./m * np.dot(dZ2, A1.T)
             
             dA1 = np.dot(W2.T, dZ2)
-            dZ1 = dA1 * relu_backward(Z1)
+            dZ1 = dA1 * tanh_backward(A1)
             
             db1 = 1./m * np.sum(dZ1, axis = 1, keepdims=True)
             dW1 = 1./m * np.dot(dZ1, X_batch.T)
             
-            t += 1
-            
             # Update W1, b1
-            vdW1 = beta1 * vdW1 + (1 - beta1) * dW1
-            vdb1 = beta1 * vdb1 + (1 - beta1) * db1
+            vdW1 = beta * vdW1 + (1 - beta) * dW1
+            vdb1 = beta * vdb1 + (1 - beta) * db1
             
-            vdW1_corrected = vdW1 / (1 - np.power(beta1, t))
-            vdb1_corrected = vdb1 / (1 - np.power(beta1, t))
-
-            sdW1 = beta2 * sdW1 + (1 - beta2) * np.power(dW1, 2)
-            sdb1 = beta2 * sdb1 + (1 - beta2) * np.power(db1, 2)
-            
-            sdW1_corrected = sdW1 / (1 - np.power(beta2, t))
-            sdb1_corrected = sdb1 / (1 - np.power(beta2, t))
-            
-            W1 -= learning_rate * vdW1_corrected / (np.sqrt(sdW1_corrected) + epsilon)
-            b1 -= learning_rate * vdb1_corrected / (np.sqrt(sdb1_corrected) + epsilon)
+            W1 -= learning_rate * vdW1
+            b1 -= learning_rate * vdb1
             
             # Update W2, b2
-            vdW2 = beta1 * vdW2 + (1 - beta1) * dW2
-            vdb2 = beta1 * vdb2 + (1 - beta1) * db2
+            vdW2 = beta * vdW2 + (1 - beta) * dW2
+            vdb2 = beta * vdb2 + (1 - beta) * db2
             
-            vdW2_corrected = vdW2 / (1 - np.power(beta1, t))
-            vdb2_corrected = vdb2 / (1 - np.power(beta1, t))
+            W2 -= learning_rate * vdW2
+            b2 -= learning_rate * vdb2
 
-            sdW2 = beta2 * sdW2 + (1 - beta2) * np.power(dW2, 2)
-            sdb2 = beta2 * sdb2 + (1 - beta2) * np.power(db2, 2)
-            
-            sdW2_corrected = sdW2 / (1 - np.power(beta2, t))
-            sdb2_corrected = sdb2 / (1 - np.power(beta2, t))
-            
-            W2 -= learning_rate * vdW2_corrected / (np.sqrt(sdW2_corrected) + epsilon)
-            b2 -= learning_rate * vdb2_corrected / (np.sqrt(sdb2_corrected) + epsilon)
+        A_v, _, _, _ = feed_forward(X_train, W1, b1, W2, b2)
 
-            A_v, _, _, _ = feed_forward(X_valid, W1, b1, W2, b2)
+        mae_train = np.sqrt(mean_absolute_error(A_v, y_train))
             
-            A_v_unnorm = scaler.inverse_transform(A_v)
-
-            mae_valid = np.sqrt(mean_absolute_error(A_v_unnorm, y_valid))
-            
-            # print("Valid: %.5f" % (mae_valid))
-            
-            if mae_valid < min_valid_mae:
-                mae_valid = min_valid_mae
-                best_w['W1'], best_w['W2'] = W1, W2
-                best_b['b1'], best_b['b2'] = b1, b2
-                
+        print("MAE Train: %.5f" % (mae_train))
 
     # Predict
-    A_p, _, _, _ = feed_forward(X_test, best_w['W1'], best_b['b1'], best_w['W2'], best_b['b2'])
+    A_p, _, _, _ = feed_forward(X_test, W1, b1, W2, b2)
     
     return A_p
 
 
-df = pd.read_csv('sinwave.csv', header=None, index_col=False, usecols=[0])
+df = pd.read_csv('data_resource_usage_fiveMinutes_6176858948.csv', header=None, index_col=False, usecols=[3])
 df.dropna(inplace=True)
 
 dataset_original = df.values
 
-X, y = helper.process_data(dataset_original, helper.power_data, helper.transform, helper.sliding_data, 2, 2)
+X, y = helper.process_data(dataset_original, helper.power_data, helper.transform, helper.sliding_data, 3, 2)
 
 train_size = int(0.7 * X.shape[0])
 valid_size = int(0.15 * X.shape[0])

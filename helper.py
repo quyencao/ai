@@ -48,6 +48,35 @@ def chebyshev_data(data, n):
 
     return expanded[:, 1:]
 
+def legendre_data(data, n):
+    expanded = np.zeros((data.shape[0], 1))
+
+    for i in range(data.shape[1]):
+        c1 = np.ones((data.shape[0], 1))
+        c2 = data[:, [i]]
+        for j in range(2, n):
+            c = ((2 * j + 1) * data[:, [i]] * c2 - j * c1) / (j + 1)
+            c1 = c2
+            c2 = c
+
+            expanded = np.concatenate((expanded, c), axis=1)
+
+    return expanded[:, 1:]
+
+def laguerre_data(data, n):
+    expanded = np.zeros((data.shape[0], 1))
+
+    for i in range(data.shape[1]):
+        c1 = np.ones((data.shape[0], 1))
+        c2 = data[:, [i]]
+        for j in range(2, n):
+            c = ((2 * j + 1 - data[:, [i]]) * c2 - j * c1) / (j + 1)
+            c1 = c2
+            c2 = c
+
+            expanded = np.concatenate((expanded, c), axis=1)
+
+    return expanded[:, 1:]
 
 def power_data(data, n):
     expanded = np.zeros((data.shape[0], 1))
@@ -62,10 +91,14 @@ def power_data(data, n):
 
 
 def process_data(ori_data, power_data, transform, sliding_data, sliding=3, n_expanded=3):
-    expanded = power_data(ori_data, n_expanded)
-    all_data = np.concatenate((ori_data, expanded), axis=1)
+    if n_expanded > 2:
+        expanded = power_data(ori_data, n_expanded)
+        all_data = np.concatenate((ori_data, expanded), axis=1)
+    else:
+        all_data = np.copy(ori_data)
+ 
     all_data_tr = transform(all_data)
 
-    X, y = sliding_data(all_data_tr, sliding, ori_data.shape[1])
+    X, y = sliding_data(all_data_tr, sliding, 1)
 
     return X, y
