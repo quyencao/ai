@@ -90,7 +90,7 @@ class PSO:
         self.w_max = 0.9
         self.w_min = 0.4
         self.pathsave = 'results/'
-        self.filenamesave = "sliding-{0}-pop_size_{1}-c1_{2}-c2_{3}".format(sliding, n_particles, c1, c2)
+        self.filenamesave = "pso_flnn_sliding_{0}-pop_size_{1}-c1_{2}-c2_{3}".format(sliding, n_particles, c1, c2)
         self.scaler = MinMaxScaler(feature_range=(0,1)).fit(dataset_original[:, 0])
         self.sliding = sliding
         # self.c1_max = 2.5
@@ -129,7 +129,6 @@ class PSO:
         self.score_test_RMSE = np.sqrt(mean_squared_error(self.y_pred_inverse, self.y_test_inverse))
 
         self.draw_predict()
-
         self.save_file_csv()
 
     def draw_predict(self):
@@ -141,6 +140,7 @@ class PSO:
         plt.xlabel('Point')
         plt.legend(['realY... Test Score RMSE= ' + str(self.score_test_RMSE) , 'predictY... Test Score MAE= '+ str(self.score_test_MAE)], loc='upper right')
         plt.savefig(self.pathsave + self.filenamesave + ".png")
+        plt.show()
         plt.close()
 
     def initialize_particles(self, n_x, n_y):

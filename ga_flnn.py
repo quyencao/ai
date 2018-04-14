@@ -1,6 +1,10 @@
 import numpy as np
 import random
 import copy
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+import matplotlib.pyplot as plt
+import helper
 
 class Chromosome:
     def __init__(self, n_x, n_y, x=None):
@@ -54,7 +58,7 @@ class Chromosome:
         """
             Arithmetic crossover
         """
-        r = random.random()
+        r = random.uniform(0,1)
         child1_x = r * my_x + (1 - r) * other_x
         child2_x = (1 - r) * my_x + r * other_x
 
@@ -62,10 +66,10 @@ class Chromosome:
             Heuristic crossover
         """
         # if self.get_fitness() > other.get_fitness():
-        #     child1_x = my_x + random.random() * (my_x - other_x)
+        #     child1_x = my_x + random.uniform(0,1) * (my_x - other_x)
         #     child2_x = my_x
         # else:
-        #     child1_x = other_x + random.random() * (other_x - my_x)
+        #     child1_x = other_x + random.uniform(0,1) * (other_x - my_x)
         #     child2_x = other_x
 
         child1 = Chromosome(self.n_x, self.n_y, child1_x)
@@ -75,7 +79,7 @@ class Chromosome:
 
     def mutate(self, mutate_rate):
         for i in range(self.dimensions):
-            if random.random() < mutate_rate:
+            if random.uniform(0,1) < mutate_rate:
                 """
                     Uniform mutation
                 """
@@ -86,7 +90,7 @@ class Chromosome:
                     Boundary mutation
                 """
                 index = np.random.randint(self.dimensions)
-                r = random.random()
+                r = random.uniform(0,1)
                 if r > 0.5:
                     self.x[index] = 1
                 else:
@@ -102,12 +106,60 @@ class Chromosome:
 
 
 class Population:
-    def __init__(self, pop_size=100):
+    def __init__(self, dataset_original, sliding = 2, pop_size=100, crossover_rate = 0.9, mutate_rate = 0.01):
+        self.dataset_original = dataset_original
         self.pop_size = pop_size
-        self.crossover_rate = 0.9
-        self.mutate_rate = 0.01
+        self.crossover_rate = crossover_rate
+        self.mutate_rate = mutate_rate
         self.best_fitness = -1
         self.best_chromosome = None
+        self.pathsave = 'results/'
+        self.filenamesave = "ga_flnn_sliding_{0}-pop_size_{1}-crossover_rate_{2}-mutate_rate_{3}".format(sliding, pop_size, crossover_rate, mutate_rate)
+        self.scaler = MinMaxScaler(feature_range=(0,1)).fit(dataset_original[:, 0])
+        self.sliding = sliding
+
+    def processing_data(self):
+        X, y = helper.process_data(self.dataset_original, helper.chebyshev_data, helper.transform, helper.sliding_data, self.sliding, 4)
+
+        train_size = int(X.shape[0] * 0.8)
+        X_train, y_train, X_test, y_test = X[:train_size, :], y[:train_size, :], X[train_size:, :], y[train_size:, :]
+
+        X_train = X_train.T
+        X_test = X_test.T
+        y_train = y_train.T
+        y_test = y_test.T
+
+        self.X_train = X_train
+        self.X_test = X_test
+        self.y_train = y_train
+        self.y_test = y_test
+
+    def draw_predict(self):
+        plt.figure(2)
+        plt.plot(self.y_test_inverse[:, 0])
+        plt.plot(self.y_pred_inverse[:, 0])
+        plt.title('Model predict')
+        plt.ylabel('Real value')
+        plt.xlabel('Point')
+        plt.legend(['realY... Test Score RMSE= ' + str(self.score_test_RMSE) , 'predictY... Test Score MAE= '+ str(self.score_test_MAE)], loc='upper right')
+        plt.savefig(self.pathsave + self.filenamesave + ".png")
+        plt.close()
+    
+    def save_file_csv(self):
+        t1 = np.concatenate( (self.y_test_inverse, self.y_pred_inverse), axis = 1)
+        np.savetxt(self.pathsave + self.filenamesave + ".csv", t1, delimiter=",")
+
+    def predict(self):
+        y_pred = self.best_chromosome.predict(self.X_test)
+
+        self.y_pred_inverse = self.scaler.inverse_transform(y_pred).T
+        self.y_test_inverse = self.scaler.inverse_transform(self.y_test).T
+
+        self.score_test_MAE = mean_absolute_error(self.y_pred_inverse, self.y_test_inverse)
+        self.score_test_RMSE = np.sqrt(mean_squared_error(self.y_pred_inverse, self.y_test_inverse))
+
+        self.draw_predict()
+        self.save_file_csv()
 
     def init_population(self, X, y):
         n_x, n_y = X.shape[0], y.shape[0]
@@ -141,7 +193,11 @@ class Population:
 
         return chromosomes_indices[best_chromosome_index]
 
-    def train(self, X, y, epochs=200):
+    def train(self, epochs=200):
+        self.processing_data()
+
+        X, y = self.X_train, self.y_train
+
         self.init_population(X, y)
 
         for e in range(epochs):
@@ -158,7 +214,7 @@ class Population:
 
                 possiblyCrossed = [parent1, parent2]
 
-                if random.random() < self.crossover_rate:
+                if random.uniform(0, 1) < self.crossover_rate:
                     child1, child2 = parent1.crossover(parent2)
 
                     possiblyCrossed = [child1, child2]
@@ -178,4 +234,4 @@ class Population:
                     next_population.append(chromosome)
             self.population = next_population
 
-        return self.best_chromosome
+        self.predict()
