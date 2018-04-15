@@ -27,13 +27,36 @@ class Chromosome:
         e_plus = np.exp(x)
         e_minus = np.exp(-x)
         return (e_plus - e_minus) / (e_plus + e_minus)
+    
+    def sigmoid(self, x):
+        return 1. / (1. + np.exp(-x))
 
-    def compute_fitness(self, X, y):
+    def relu(self, x):
+        zeros = np.zeros(x.shape)
+        return np.maximum(zeros, x)
+
+    def elu(self, x):
+        exp_x = np.exp(x) - 1
+        exp_x[x >= 0] = 0
+
+        copy_x = np.copy(x)
+        copy_x[x < 0] = 0
+
+        return copy_x + exp_x
+
+    def compute_fitness(self, X, y, activation = 0):
         w, b = self.x[:self.n_x * self.n_y].reshape((self.n_y, -1)), self.x[self.n_x * self.n_y:].reshape((self.n_y, 1))
 
         Z = np.dot(w, X) + b
-        # A = self.tanh(Z)
-        A = Z
+        
+        if activation == 0:
+            A = Z
+        elif activation == 1:
+            A = self.tanh(Z)
+        elif activation == 2:
+            A = self.relu(Z)
+        elif activation == 3:
+            A = self.elu(Z)
 
         error = np.sum(np.abs(A - y))
         fitness = 1. / (error + 1)
@@ -49,12 +72,6 @@ class Chromosome:
     def crossover(self, other):
         my_x = self.get_x()
         other_x = other.get_x()
-
-        # child1_x = (my_x + other_x) / 2
-        
-        # pmax = np.ones(my_x.shape)
-        # maxp1p2 = np.maximum(my_x, other_x)
-        # child2_x = pmax * 0.4 + maxp1p2 * 0.6
         
         """
             Arithmetic crossover
@@ -62,16 +79,6 @@ class Chromosome:
         r = random.uniform(0,1)
         child1_x = r * my_x + (1 - r) * other_x
         child2_x = (1 - r) * my_x + r * other_x
-
-        """
-            Heuristic crossover
-        """
-        # if self.get_fitness() > other.get_fitness():
-        #     child1_x = my_x + random.uniform(0,1) * (my_x - other_x)
-        #     child2_x = my_x
-        # else:
-        #     child1_x = other_x + random.uniform(0,1) * (other_x - my_x)
-        #     child2_x = other_x
 
         child1 = Chromosome(self.n_x, self.n_y, child1_x)
         child2 = Chromosome(self.n_x, self.n_y, child2_x)
@@ -87,16 +94,6 @@ class Chromosome:
                 index = np.random.randint(self.dimensions)
                 self.x[index] = np.random.uniform(low=-1, high=1)
 
-                """
-                    Boundary mutation
-                """
-                # index = np.random.randint(self.dimensions)
-                # r = random.uniform(0,1)
-                # if r > 0.5:
-                #     self.x[index] = 1
-                # else:
-                #     self.x[index] = -1
-
     def predict(self, X_test):
         w, b = self.x[:self.n_x * self.n_y].reshape((self.n_y, -1)), self.x[self.n_x * self.n_y:].reshape((self.n_y, 1))
 
@@ -107,7 +104,7 @@ class Chromosome:
 
 
 class Population:
-    def __init__(self, dataset_original, sliding = 2, pop_size=100, crossover_rate = 0.9, mutate_rate = 0.01, method_statistic = 2):
+    def __init__(self, dataset_original, sliding = 2, pop_size=100, crossover_rate = 0.9, mutate_rate = 0.01, method_statistic = 2, n_expanded = 2, activation=0):
         self.dataset_original = dataset_original
         self.pop_size = pop_size
         self.crossover_rate = crossover_rate
@@ -115,12 +112,14 @@ class Population:
         self.best_fitness = -1
         self.best_chromosome = None
         self.pathsave = 'results/'
-        self.filenamesave = "ga_flnn_sliding_{0}-pop_size_{1}-crossover_rate_{2}-mutate_rate_{3}-method_statistic_{4}".format(sliding, pop_size, crossover_rate, mutate_rate, method_statistic)
+        self.filenamesave = "ga_flnn_sliding_{0}-pop_size_{1}-crossover_rate_{2}-mutate_rate_{3}-method_statistic_{4}-n_expanded_{5}-activation_{6}".format(sliding, pop_size, crossover_rate, mutate_rate, method_statistic, n_expanded, activation)
         self.min_max_scaler = MinMaxScaler()
         self.sliding = sliding
         self.dimension = dataset_original.shape[1]
         self.test_idx = self.dataset_original.shape[0] - self.sliding
         self.method_statistic = method_statistic
+        self.n_expanded = n_expanded
+        self.activation = activation
 
     def inverse_data(self, transform_data):
         self.min_max_scaler.fit_transform(self.dataset_original[:, [0]])
@@ -171,14 +170,14 @@ class Population:
         return expanded[:, 1:]
         
     def processing_data_2(self):
-        dataset_original, test_idx, sliding, method_statistic = self.dataset_original, self.test_idx , self.sliding, self.method_statistic
+        dataset_original, test_idx, sliding, method_statistic, n_expanded = self.dataset_original, self.test_idx , self.sliding, self.method_statistic, self.n_expanded
         
         list_split = []        
         for i in range(self.dimension):
             list_split.append(dataset_original[:, i:i+1])
         
         # Expanded
-        expanded = self.chebyshev_polynomials(1)
+        expanded = self.chebyshev_polynomials(n_expanded)
         for i in range(expanded.shape[1]):
             list_split.append(expanded[:, i:i+1])
         
@@ -277,7 +276,7 @@ class Population:
         population = []
         for i in range(self.pop_size):
             c = Chromosome(n_x, n_y)
-            f = c.compute_fitness(X, y)
+            f = c.compute_fitness(X, y, self.activation)
             c.set_fitness(f)
 
             population.append(c)
@@ -312,16 +311,32 @@ class Population:
         self.init_population(X, y)
 
         for e in range(epochs):
+
             print(self.best_fitness)
 
             fitnesses = np.array([p.get_fitness() for p in self.population])
 
+            sorted_fitness = np.argsort(-1 * fitnesses)
+
+            population = np.array(self.population)
+
+            sorted_population = population[sorted_fitness]
+
+            # Select 40% top produce offspring
+            n = int(self.pop_size * 0.4)
+            sub_population = sorted_population[:n]
+            sub_fitnesses = fitnesses[sorted_fitness[:n]]
+
             next_population = []
+
+            # keep 10% to next population
+            next_population.extend(sorted_population[:int(0.05 * self.pop_size)])
+            next_population.extend(sorted_population[-int(0.01 * self.pop_size):])
 
             while (len(next_population) < self.pop_size):
 
-                parent1 = self.population[self.tournament_selection(fitnesses)]
-                parent2 = self.population[self.tournament_selection(fitnesses)]
+                parent1 = sub_population[self.tournament_selection(sub_fitnesses)]
+                parent2 = sub_population[self.tournament_selection(sub_fitnesses)]
 
                 possiblyCrossed = [parent1, parent2]
 
@@ -334,7 +349,7 @@ class Population:
                     chromosome.mutate(self.mutate_rate)
 
                 for chromosome in possiblyCrossed:
-                    f = chromosome.compute_fitness(X, y)
+                    f = chromosome.compute_fitness(X, y, self.activation)
 
                     chromosome.set_fitness(f)
 
