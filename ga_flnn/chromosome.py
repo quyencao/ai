@@ -1,5 +1,6 @@
 import numpy as np
 import random
+from sklearn.metrics import mean_absolute_error
 
 class Chromosome:
     def __init__(self, n_x, n_y, x=None):
@@ -53,7 +54,8 @@ class Chromosome:
         elif activation == 3:
             A = self.elu(Z)
 
-        error = np.sum(np.abs(A - y))
+        # error = np.sum(np.abs(A - y))
+        error = mean_absolute_error(A, y)
         fitness = 1. / (error + 1)
 
         return fitness

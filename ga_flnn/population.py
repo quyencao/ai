@@ -154,7 +154,7 @@ class Population:
         plt.xlabel('Point')
         plt.legend(['realY... Test Score RMSE= ' + str(self.score_test_RMSE) , 'predictY... Test Score MAE= '+ str(self.score_test_MAE)], loc='upper right')
         plt.savefig(self.pathsave + self.filenamesave + ".png")
-        plt.show()
+        # plt.show()
         plt.close()
     
     def save_file_csv(self):
