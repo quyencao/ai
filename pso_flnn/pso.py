@@ -99,7 +99,7 @@ class PSO:
                 dataset_sliding = np.concatenate((dataset_sliding, d), axis = 1)
         dataset_sliding = dataset_sliding[:, 1:]
         
-        dataset_y = copy.deepcopy(list_transform[0][sliding:]) 
+        dataset_y = copy.deepcopy(list_transform[0][sliding:])
         
         if method_statistic == 0:
             dataset_X = copy.deepcopy(dataset_sliding)

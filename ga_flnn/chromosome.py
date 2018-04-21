@@ -23,9 +23,6 @@ class Chromosome:
         e_plus = np.exp(x)
         e_minus = np.exp(-x)
         return (e_plus - e_minus) / (e_plus + e_minus)
-    
-    def sigmoid(self, x):
-        return 1. / (1. + np.exp(-x))
 
     def relu(self, x):
         zeros = np.zeros(x.shape)

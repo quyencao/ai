@@ -7,7 +7,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 import matplotlib.pyplot as plt
 
 class Population:
-    def __init__(self, dataset_original, sliding = 2, pop_size=100, crossover_rate = 0.9, mutate_rate = 0.01, method_statistic = 2, n_expanded = 2, activation=0, fs = '2m'):
+    def __init__(self, dataset_original, sliding = 2, pop_size=100, crossover_rate = 0.9, mutate_rate = 0.01, method_statistic = 2, activation=0, fs = '2m'):
         self.dataset_original = dataset_original
         self.pop_size = pop_size
         self.crossover_rate = crossover_rate
@@ -15,13 +15,13 @@ class Population:
         self.best_fitness = -1
         self.best_chromosome = None
         self.pathsave = 'results/'
-        self.filenamesave = "{0}-ga_flnn_sliding_{1}-pop_size_{2}-crossover_rate_{3}-mutate_rate_{4}-method_statistic_{5}-n_expanded_{6}-activation_{7}".format(fs, sliding, pop_size, crossover_rate, mutate_rate, method_statistic, n_expanded, activation)
+        self.filenamesave = "{0}-ga_flnn_sliding_{1}-pop_size_{2}-crossover_rate_{3}-mutate_rate_{4}-method_statistic_{5}-activation_{6}".format(fs, sliding, pop_size, crossover_rate, mutate_rate, method_statistic, activation)
         self.min_max_scaler = MinMaxScaler()
         self.sliding = sliding
         self.dimension = dataset_original.shape[1]
         self.test_idx = self.dataset_original.shape[0] - self.sliding
         self.method_statistic = method_statistic
-        self.n_expanded = n_expanded
+        self.n_expanded = 2
         self.activation = activation
 
     def inverse_data(self, transform_data):
@@ -71,7 +71,23 @@ class Population:
                 expanded = np.concatenate((expanded, c), axis=1)
 
         return expanded[:, 1:]
+
+    def trigonometric_data(self):
+        expanded = np.zeros((self.dataset_original.shape[0], 1))
+
+        for i in range(self.dimension):
+            for j in [1, 3]:
+                d = np.cos(j * np.pi * self.dataset_original[:, [i]])
+                expanded = np.concatenate((expanded, d), axis=1)
         
+        d = np.ones((self.dataset_original.shape[0], 1))
+        for i in range(self.dimension):
+            d *= self.dataset_original[:, [i]]
+
+        expanded = np.concatenate((expanded, d), axis=1)
+
+        return expanded[:, 1:]
+
     def processing_data_2(self):
         dataset_original, test_idx, sliding, method_statistic, n_expanded = self.dataset_original, self.test_idx , self.sliding, self.method_statistic, self.n_expanded
         
