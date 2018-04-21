@@ -7,7 +7,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 import matplotlib.pyplot as plt
 
 class Population:
-    def __init__(self, dataset_original, sliding = 2, pop_size=100, crossover_rate = 0.9, mutate_rate = 0.01, method_statistic = 2, activation=0, fs = '2m'):
+    def __init__(self, dataset_original, sliding = 2, pop_size=100, crossover_rate = 0.9, mutate_rate = 0.01, method_statistic = 2, n_expanded = 2,activation=0, fs = '2m'):
         self.dataset_original = dataset_original
         self.pop_size = pop_size
         self.crossover_rate = crossover_rate
@@ -21,7 +21,7 @@ class Population:
         self.dimension = dataset_original.shape[1]
         self.test_idx = self.dataset_original.shape[0] - self.sliding
         self.method_statistic = method_statistic
-        self.n_expanded = 2
+        self.n_expanded = n_expanded
         self.activation = activation
 
     def inverse_data(self, transform_data):
@@ -163,8 +163,8 @@ class Population:
 
     def draw_predict(self):
         plt.figure(2)
-        plt.plot(self.y_test_inverse[:, 0], color='blue')
-        plt.plot(self.y_pred_inverse[:, 0], color='red')
+        plt.plot(self.y_test_inverse[:, 0], color='#009FFD')
+        plt.plot(self.y_pred_inverse[:, 0], color='#FFA400')
         plt.title('Model predict')
         plt.ylabel('Real value')
         plt.xlabel('Point')
@@ -230,7 +230,7 @@ class Population:
 
         for e in range(epochs):
 
-            print(self.best_fitness)
+            # print(self.best_fitness)
 
             fitnesses = np.array([p.get_fitness() for p in self.population])
 
@@ -248,8 +248,8 @@ class Population:
             next_population = []
 
             # keep 10% to next population
-            next_population.extend(sorted_population[:int(0.05 * self.pop_size)])
-            next_population.extend(sorted_population[-int(0.01 * self.pop_size):])
+            # next_population.extend(sorted_population[:int(0.05 * self.pop_size)])
+            # next_population.extend(sorted_population[-int(0.01 * self.pop_size):])
 
             while (len(next_population) < self.pop_size):
 
@@ -277,5 +277,5 @@ class Population:
 
                     next_population.append(chromosome)
             self.population = next_population
-        print("================DONE===================")
+        # print("================DONE===================")
         self.predict()

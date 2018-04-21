@@ -166,8 +166,8 @@ class PSO:
 
     def draw_predict(self):
         plt.figure(2)
-        plt.plot(self.y_test_inverse[:, 0])
-        plt.plot(self.y_pred_inverse[:, 0])
+        plt.plot(self.y_test_inverse[:, 0], color='#009FFD')
+        plt.plot(self.y_pred_inverse[:, 0], color='#FFA400')
         plt.title('Model predict')
         plt.ylabel('Real value')
         plt.xlabel('Point')
@@ -220,7 +220,7 @@ class PSO:
 
                 avg_mae_train += p.get_mae(X_train, y_train)
 
-            print("Epoch %.f: %.5f" % (e + 1, avg_mae_train / len(particles)))
+            # print("Epoch %.f: %.5f" % (e + 1, avg_mae_train / len(particles)))
 
             for p in particles:
                 x = p.get_x()
