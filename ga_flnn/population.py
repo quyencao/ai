@@ -16,7 +16,7 @@ class Population:
         self.mutate_rate = mutate_rate
         self.best_fitness = -1
         self.best_chromosome = None
-        self.pathsave = 'home/ubuntu/quyencao/ai/results/' + fs + '/'
+        self.pathsave = '/home/ubuntu/quyencao/ai/results/' + fs + '/'
         self.filenamesave = "{0}-ga_flnn_sliding_{1}-pop_size_{2}-crossover_rate_{3}-mutate_rate_{4}-method_statistic_{5}-activation_{6}".format(fs, sliding, pop_size, crossover_rate, mutate_rate, method_statistic, activation)
         self.min_max_scaler = MinMaxScaler()
         self.sliding = sliding
