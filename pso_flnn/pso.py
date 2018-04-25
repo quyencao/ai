@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 from particle import Particle
 
 class PSO:
-    def __init__(self, dataset_original, sliding, n_particles=100, c1 = 2, c2 = 2, method_statistic = 0, n_expanded = 2, activation = 0, fs = '2m'):
-        self.dataset_original = dataset_original
+    def __init__(self, dataset_original, train_idx, test_idx, sliding, n_particles=100, c1 = 2, c2 = 2, method_statistic = 0, n_expanded = 2, activation = 0, fs = '2m'):
+        self.dataset_original = dataset_original[:test_idx+sliding, :]
         self.n_particles = n_particles
         self.c1 = c1
         self.c2 = c2
@@ -16,12 +16,14 @@ class PSO:
         self.v_min = -1
         self.w_max = 0.9
         self.w_min = 0.4
-        self.pathsave = '/home/ubuntu/quyencao/ai/results/' + fs + '/'
+        # self.pathsave = '/home/ubuntu/quyencao/ai/results/' + fs + '/'
+        self.pathsave = 'results/'
         self.filenamesave = "{0}-pso_flnn_sliding_{1}-pop_size_{2}-c1_{3}-c2_{4}-method_statistic_{5}-n_expanded_{6}-activation_{7}".format(fs, sliding, n_particles, c1, c2, method_statistic, n_expanded, activation)
         self.min_max_scaler = MinMaxScaler()
         self.sliding = sliding
         self.dimension = dataset_original.shape[1]
-        self.test_idx = self.dataset_original.shape[0] - self.sliding
+        self.train_idx = train_idx
+        self.test_idx = test_idx
         self.method_statistic = method_statistic
         self.n_expanded = n_expanded
         self.activation = activation
@@ -75,7 +77,7 @@ class PSO:
         return expanded[:, 1:]
         
     def processing_data_2(self):
-        dataset_original, test_idx, sliding, method_statistic, n_expanded = self.dataset_original, self.test_idx , self.sliding, self.method_statistic, self.n_expanded
+        dataset_original, train_idx, test_idx, sliding, method_statistic, n_expanded = self.dataset_original, self.train_idx, self.test_idx , self.sliding, self.method_statistic, self.n_expanded
         
         list_split = []        
         for i in range(self.dimension):
@@ -118,8 +120,8 @@ class PSO:
                 dataset_X = np.concatenate((dataset_X, min_X, median_X, max_X), axis = 1)
             dataset_X = dataset_X[:, 1:]     
         
-        train_size = int(dataset_X.shape[0] * 0.8)
-        X_train, y_train, X_test, y_test = dataset_X[:train_size, :], dataset_y[:train_size, :], dataset_X[train_size:, :], dataset_y[train_size:, :]
+        # train_size = int(dataset_X.shape[0] * 0.8)
+        X_train, y_train, X_test, y_test = dataset_X[:train_idx, :], dataset_y[:train_idx, :], dataset_X[train_idx:, :], dataset_y[train_idx:, :]
 
         X_train = X_train.T
         X_test = X_test.T
@@ -160,6 +162,8 @@ class PSO:
 
         self.score_test_MAE = mean_absolute_error(self.y_pred_inverse, self.y_test_inverse)
         self.score_test_RMSE = np.sqrt(mean_squared_error(self.y_pred_inverse, self.y_test_inverse))
+
+        print(self.score_test_MAE)
 
         self.draw_predict()
         self.save_file_csv()
@@ -220,7 +224,7 @@ class PSO:
 
                 avg_mae_train += p.get_mae(X_train, y_train)
 
-            # print("Epoch %.f: %.5f" % (e + 1, avg_mae_train / len(particles)))
+            print("Epoch %.f: %.5f" % (e + 1, avg_mae_train / len(particles)))
 
             for p in particles:
                 x = p.get_x()

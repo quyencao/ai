@@ -7,8 +7,8 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 import matplotlib.pyplot as plt
 
 class FLNN:
-    def __init__(self, dataset_original, sliding, method_statistic, n_expanded = 2, activation = 0, fs = '2m', learning_rate = 0.05, batch_size = 16, beta = 0.9):
-        self.dataset_original = dataset_original
+    def __init__(self, dataset_original, train_idx, test_idx, sliding, method_statistic, n_expanded = 2, activation = 0, fs = '2m', learning_rate = 0.05, batch_size = 16, beta = 0.9):
+        self.dataset_original = dataset_original[:test_idx+sliding, :]
         self.sliding = sliding
         self.method_statistic = method_statistic
         self.n_expanded = n_expanded
@@ -17,7 +17,8 @@ class FLNN:
         self.batch_size = batch_size
         self.beta = beta
         self.min_max_scaler = MinMaxScaler()
-        self.test_idx = self.dataset_original.shape[0] - self.sliding
+        self.train_idx = train_idx
+        self.test_idx = test_idx
         self.dimension = dataset_original.shape[1]
         self.pathsave = 'results/'
         self.filenamesave = "{0}-flnn_sliding_{1}-method_statistic_{2}-n_expanded_{3}-activation_{4}".format(fs, sliding, method_statistic, n_expanded, activation)
@@ -41,8 +42,8 @@ class FLNN:
 
     def draw_predict(self):
         plt.figure(2)
-        plt.plot(self.y_test_inverse[:, 0])
-        plt.plot(self.y_pred_inverse[:, 0])
+        plt.plot(self.y_test_inverse[:, 0], color='#009FFD')
+        plt.plot(self.y_pred_inverse[:, 0], color='#FFA400')
         plt.title('Model predict')
         plt.ylabel('Real value')
         plt.xlabel('Point')
@@ -99,7 +100,7 @@ class FLNN:
         return expanded[:, 1:]
         
     def processing_data_2(self):
-        dataset_original, test_idx, sliding, method_statistic, n_expanded = self.dataset_original, self.test_idx , self.sliding, self.method_statistic, self.n_expanded
+        dataset_original, train_idx, test_idx, sliding, method_statistic, n_expanded = self.dataset_original, self.train_idx, self.test_idx , self.sliding, self.method_statistic, self.n_expanded
         
         list_split = []        
         for i in range(self.dimension):
@@ -142,8 +143,8 @@ class FLNN:
                 dataset_X = np.concatenate((dataset_X, min_X, median_X, max_X), axis = 1)
             dataset_X = dataset_X[:, 1:]     
         
-        train_size = int(dataset_X.shape[0] * 0.8)
-        X_train, y_train, X_test, y_test = dataset_X[:train_size, :], dataset_y[:train_size, :], dataset_X[train_size:, :], dataset_y[train_size:, :]
+        # train_size = int(dataset_X.shape[0] * 0.8)
+        X_train, y_train, X_test, y_test = dataset_X[:train_idx, :], dataset_y[:train_idx, :], dataset_X[train_idx:, :], dataset_y[train_idx:, :]
 
         X_train = X_train.T
         X_test = X_test.T

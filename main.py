@@ -16,7 +16,9 @@ foldername = 'data/'
 
 # parameters
 c_couple = [(2, 2), (1,2, 1.2), (0.8, 2.0), (1.6, 0.6)]
-sliding_windows = [2, 3, 5]
+# list_idx = [(11120, 11120 + 2780), (6640, 6640 + 1660), (4400, 4400 + 1100), (3280, 820)]
+list_idx = [(11120, 11120 + 2780), (6672, 6640 + 1668), (4160, 4160 + 1040), (3336, 3168 + 834)]
+sliding_windows = [2,3,5]
 pop_sizes = [100, 150, 200]
 cross_rates = [0.7, 0.8, 0.9]
 mutate_rates = [0.01, 0.02, 0.03]
@@ -27,26 +29,6 @@ activations = [3, 2, 1, 0]
 """
     RUN GA - FLNN
 """
-for idx, filename in enumerate(filenames):
-    df = pd.read_csv(foldername + filename, header=None, index_col=False, usecols=[3, 4])
-    df.dropna(inplace=True)
-    dataset_original = df.values
-
-    fs = fses[idx]
-
-    for sliding in sliding_windows:
-        for pop_size in pop_sizes:
-            for cr in cross_rates:
-                for mr in mutate_rates:
-                    for ms in method_statistic:
-                        for ne in n_expanded:
-                            for activation in activations:
-                                p = Population(dataset_original, sliding, pop_size, cr, mr, ms, ne, activation, fs)
-                                p.train(epochs = 500)
-
-"""
-    RUN PSO - FLNN
-"""
 # for idx, filename in enumerate(filenames):
 #     df = pd.read_csv(foldername + filename, header=None, index_col=False, usecols=[3, 4])
 #     df.dropna(inplace=True)
@@ -56,12 +38,34 @@ for idx, filename in enumerate(filenames):
 
 #     for sliding in sliding_windows:
 #         for pop_size in pop_sizes:
-#             for cc in c_couple:
-#                 for ms in method_statistic:
-#                     for ne in n_expanded:
-#                         for activation in activations:
-#                             p = PSO(dataset_original, sliding, pop_size, cc[0], cc[1], ms, ne, activation, fs)
-#                             p.train(epochs = 500)
+#             for cr in cross_rates:
+#                 for mr in mutate_rates:
+#                     for ms in method_statistic:
+#                         for ne in n_expanded:
+#                             for activation in activations:
+#                                 p = Population(dataset_original, sliding, pop_size, cr, mr, ms, ne, activation, fs)
+#                                 p.train(epochs = 500)
+
+"""
+    RUN PSO - FLNN
+"""
+for idx, filename in enumerate(filenames):
+    df = pd.read_csv(foldername + filename, header=None, index_col=False, usecols=[3, 4])
+    df.dropna(inplace=True)
+    dataset_original = df.values
+
+    fs = fses[3]
+
+    idxs = list_idx[3]
+
+    for sliding in sliding_windows:
+        for pop_size in pop_sizes:
+            for cc in c_couple:
+                for ms in method_statistic:
+                    for ne in n_expanded:
+                        for activation in activations:
+                            p = PSO(dataset_original, idxs[0], idxs[1], sliding, pop_size, cc[0], cc[1], ms, ne, activation, fs)
+                            p.train(epochs = 500)
 
 """
     RUN FLNN
@@ -72,12 +76,13 @@ for idx, filename in enumerate(filenames):
 #     dataset_original = df.values
 
 #     fs = fses[idx]
+#     idxs = list_idx[idx]
 
 #     for sliding in sliding_windows:
 #         for ms in method_statistic:
 #             for ne in n_expanded:
 #                 for activation in activations:
-#                     p = FLNN(dataset_original, sliding, ms, ne, activation, fs)
+#                     p = FLNN(dataset_original, idxs[0], idxs[1], sliding, ms, ne, activation, fs)
 #                     p.train(epochs = 1000)
 """
     RUN ANN
@@ -87,10 +92,11 @@ for idx, filename in enumerate(filenames):
 #     df.dropna(inplace=True)
 #     dataset_original = df.values
 
-#     fs = fses[idx]
+#     fs = fses[1]
+#     idxs = list_idx[1]
 
 #     for sliding in sliding_windows:
 #         for ms in method_statistic:
 #             for activation in activations:
-#                 p = ANN(dataset_original, sliding, ms, activation, fs)
-#                 p.train(epochs = 500)
+#                 p = ANN(dataset_original, idxs[0], idxs[1], sliding, ms, activation, fs)
+#                 p.train(epochs = 1000)

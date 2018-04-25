@@ -190,6 +190,8 @@ class Population:
         self.score_test_MAE = mean_absolute_error(self.y_pred_inverse, self.y_test_inverse)
         self.score_test_RMSE = np.sqrt(mean_squared_error(self.y_pred_inverse, self.y_test_inverse))
 
+        print(self.score_test_MAE)
+
         self.draw_predict()
         self.save_file_csv()
 
