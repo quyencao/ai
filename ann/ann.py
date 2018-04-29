@@ -290,7 +290,7 @@ class ANN:
 
             mae_train = np.sqrt(mean_absolute_error(A_v, y_train))
                 
-            print("MAE Train: %.5f" % (mae_train))
+            # print("MAE Train: %.5f" % (mae_train))
 
         self.W1 = W1
         self.W2 = W2

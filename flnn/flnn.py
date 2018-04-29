@@ -256,7 +256,7 @@ class FLNN:
             A_t = self.tanh(Z_t)
                 
             mae_train = mean_absolute_error(A_t, y_train)
-            print("MAE Train: %.5f" % (mae_train))
+            # print("MAE Train: %.5f" % (mae_train))
 
         self.W = W
         self.b = b

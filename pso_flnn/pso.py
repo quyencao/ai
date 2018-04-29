@@ -16,8 +16,8 @@ class PSO:
         self.v_min = -1
         self.w_max = 0.9
         self.w_min = 0.4
-        # self.pathsave = '/home/ubuntu/quyencao/ai/results/' + fs + '/'
-        self.pathsave = 'results/'
+        self.pathsave = '/home/ubuntu/quyencao/ai/results/' + fs + '/'
+        # self.pathsave = 'results/'
         self.filenamesave = "{0}-pso_flnn_sliding_{1}-pop_size_{2}-c1_{3}-c2_{4}-method_statistic_{5}-n_expanded_{6}-activation_{7}".format(fs, sliding, n_particles, c1, c2, method_statistic, n_expanded, activation)
         self.min_max_scaler = MinMaxScaler()
         self.sliding = sliding
@@ -224,7 +224,7 @@ class PSO:
 
                 avg_mae_train += p.get_mae(X_train, y_train)
 
-            print("Epoch %.f: %.5f" % (e + 1, avg_mae_train / len(particles)))
+            # print("Epoch %.f: %.5f" % (e + 1, avg_mae_train / len(particles)))
 
             for p in particles:
                 x = p.get_x()
